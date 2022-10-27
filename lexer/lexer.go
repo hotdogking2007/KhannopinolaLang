@@ -46,8 +46,10 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.PLUS, l.ch)
 	case rune('-'):
 		tok = newToken(token.MINUS, l.ch)
+	case rune('*'):
+		tok = newToken(token.ASTERISK, l.ch)
 	case rune('!'):
-		if l.peekChar() == '=' {
+		if l.peekChar() == rune('=') {
 			ch := l.ch
 			l.readChar()
 			literal := string(ch) + string(ch)
@@ -56,6 +58,12 @@ func (l *Lexer) NextToken() token.Token {
 			tok = newToken(token.BANG, l.ch)
 		}
 	case rune('/'):
+		if l.peekChar() == rune('/') {
+			tok.Type = token.COMMENT
+			tok.Literal = l.readString()
+		} else {
+			tok = newToken(token.SLASH, l.ch)
+		}
 		tok = newToken(token.SLASH, l.ch)
 	case rune('<'):
 		tok = newToken(token.LT, l.ch)
@@ -132,6 +140,17 @@ func (l *Lexer) readString() string {
 	for {
 		l.readChar()
 		if l.ch == rune('"') || l.ch == rune(0) {
+			break
+		}
+	}
+
+	return string(l.input[position:l.position])
+}
+func (l *Lexer) readComment() string {
+	position := l.position + 1
+	for {
+		l.readChar()
+		if l.ch == rune(0) || l.ch == rune('\n') {
 			break
 		}
 	}
